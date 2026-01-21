@@ -27,13 +27,15 @@ public class ActionUtils {
         }
     }
 
-    public static void consoleCommand(String actionLine){
-        ConsoleCommandSender sender = Bukkit.getConsoleSender();
-        Bukkit.dispatchCommand(sender, actionLine);
+    public static void consoleCommand(PlayerKits2 plugin, String actionLine){
+        Bukkit.getGlobalRegionScheduler().run(plugin, t -> {
+            ConsoleCommandSender sender = Bukkit.getConsoleSender();
+            Bukkit.dispatchCommand(sender, actionLine);
+        });
     }
 
-    public static void playerCommand(Player player, String actionLine){
-        player.performCommand(actionLine);
+    public static void playerCommand(PlayerKits2 plugin, Player player, String actionLine){
+        player.getScheduler().run(plugin, t -> player.performCommand(actionLine), null);
     }
 
     public static void playSound(Player player,String actionLine){
@@ -51,7 +53,12 @@ public class ActionUtils {
             return;
         }
 
-        player.playSound(player.getLocation(), sound, volume, pitch);
+        Sound finalSound = sound;
+        int finalVolume = volume;
+        float finalPitch = pitch;
+        player.getScheduler().run(PlayerKitsAPI.getPlugin(), t -> {
+            player.playSound(player.getLocation(), finalSound, finalVolume, finalPitch);
+        }, null);
     }
 
     private static Sound getSoundByName(String name){
@@ -118,25 +125,28 @@ public class ActionUtils {
         }
 
         Location location = player.getLocation();
-
-        ServerVersion serverVersion = PlayerKits2.serverVersion;
-        EntityType entityType = null;
-        if(serverVersion.serverVersionGreaterEqualThan(serverVersion,ServerVersion.v1_20_R4)){
-            entityType = EntityType.FIREWORK_ROCKET;
-        }else{
-            entityType = EntityType.valueOf("FIREWORK");
-        }
-        Firework firework = (Firework) location.getWorld().spawnEntity(location, entityType);
-        FireworkMeta fireworkMeta = firework.getFireworkMeta();
-        FireworkEffect effect = FireworkEffect.builder().flicker(false)
-                .withColor(colors)
-                .with(type)
-                .withFade(fadeColors)
-                .build();
-        fireworkMeta.addEffect(effect);
-        fireworkMeta.setPower(power);
-        firework.setFireworkMeta(fireworkMeta);
-        firework.setMetadata("playerkits", new FixedMetadataValue(plugin, "no_damage"));
+        FireworkEffect.Type finalType = type;
+        int finalPower = power;
+        Bukkit.getRegionScheduler().run(plugin, location, t -> {
+            ServerVersion serverVersion = PlayerKits2.serverVersion;
+            EntityType entityType = null;
+            if(serverVersion.serverVersionGreaterEqualThan(serverVersion,ServerVersion.v1_20_R4)){
+                entityType = EntityType.FIREWORK_ROCKET;
+            }else{
+                entityType = EntityType.valueOf("FIREWORK");
+            }
+            Firework firework = (Firework) location.getWorld().spawnEntity(location, entityType);
+            FireworkMeta fireworkMeta = firework.getFireworkMeta();
+            FireworkEffect effect = FireworkEffect.builder().flicker(false)
+                    .withColor(colors)
+                    .with(finalType)
+                    .withFade(fadeColors)
+                    .build();
+            fireworkMeta.addEffect(effect);
+            fireworkMeta.setPower(finalPower);
+            firework.setFireworkMeta(fireworkMeta);
+            firework.setMetadata("playerkits", new FixedMetadataValue(plugin, "no_damage"));
+        });
     }
 
     public static void closeInventory(Player player) {

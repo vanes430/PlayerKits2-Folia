@@ -1,7 +1,7 @@
 package pk.ajneb97.configs;
 
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.scheduler.BukkitRunnable;
 import pk.ajneb97.PlayerKits2;
 import pk.ajneb97.configs.model.CommonConfig;
 import pk.ajneb97.model.PlayerData;
@@ -30,45 +30,39 @@ public class PlayersConfigManager extends DataFolderConfigManager{
     }
 
     public void loadConfig(UUID uuid, GenericCallback<PlayerData> callback) {
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                PlayerData playerData = null;
-                CommonConfig playerConfig = getConfigFile(uuid+".yml",false);
-                if(playerConfig != null) {
-                    // If config exists
-                    FileConfiguration config = playerConfig.getConfig();
-                    String name = config.getString("name");
-                    ArrayList<PlayerDataKit> playerDataKits = new ArrayList<>();
-                    if (config.contains("kits")) {
-                        for (String key : config.getConfigurationSection("kits").getKeys(false)) {
-                            long cooldown = config.getLong("kits." + key + ".cooldown");
-                            boolean oneTime = config.getBoolean("kits." + key + ".one_time");
-                            boolean bought = config.getBoolean("kits." + key + ".bought");
+        Bukkit.getAsyncScheduler().runNow(plugin, task -> {
+            PlayerData playerData = null;
+            CommonConfig playerConfig = getConfigFile(uuid+".yml",false);
+            if(playerConfig != null) {
+                // If config exists
+                FileConfiguration config = playerConfig.getConfig();
+                String name = config.getString("name");
+                ArrayList<PlayerDataKit> playerDataKits = new ArrayList<>();
+                if (config.contains("kits")) {
+                    for (String key : config.getConfigurationSection("kits").getKeys(false)) {
+                        long cooldown = config.getLong("kits." + key + ".cooldown");
+                        boolean oneTime = config.getBoolean("kits." + key + ".one_time");
+                        boolean bought = config.getBoolean("kits." + key + ".bought");
 
-                            PlayerDataKit playerDataKit = new PlayerDataKit(key);
-                            playerDataKit.setCooldown(cooldown);
-                            playerDataKit.setOneTime(oneTime);
-                            playerDataKit.setBought(bought);
+                        PlayerDataKit playerDataKit = new PlayerDataKit(key);
+                        playerDataKit.setCooldown(cooldown);
+                        playerDataKit.setOneTime(oneTime);
+                        playerDataKit.setBought(bought);
 
-                            playerDataKits.add(playerDataKit);
-                        }
+                        playerDataKits.add(playerDataKit);
                     }
-
-                    playerData = new PlayerData(uuid, name);
-                    playerData.setKits(playerDataKits);
                 }
 
-                PlayerData finalPlayer = playerData;
-
-                new BukkitRunnable(){
-                    @Override
-                    public void run() {
-                        callback.onDone(finalPlayer);
-                    }
-                }.runTask(plugin);
+                playerData = new PlayerData(uuid, name);
+                playerData.setKits(playerDataKits);
             }
-        }.runTaskAsynchronously(plugin);
+
+            PlayerData finalPlayer = playerData;
+
+            Bukkit.getGlobalRegionScheduler().run(plugin, task1 -> {
+                callback.onDone(finalPlayer);
+            });
+        });
     }
 
     public void saveConfig(PlayerData playerData){

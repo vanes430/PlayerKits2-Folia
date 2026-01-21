@@ -28,59 +28,61 @@ public class InventoryEditKitItemsManager {
     }
 
     public void openInventory(InventoryPlayer inventoryPlayer){
-        inventoryPlayer.setInventoryName("edit_items");
-        Inventory inv = Bukkit.createInventory(null, 54, MessagesManager.getLegacyColoredMessage("&9Editing Kit"));
+        inventoryPlayer.getPlayer().getScheduler().run(plugin, t -> {
+            inventoryPlayer.setInventoryName("edit_items");
+            Inventory inv = Bukkit.createInventory(null, 54, MessagesManager.getLegacyColoredMessage("&9Editing Kit"));
 
-        //Decoration
-        for(int i=46;i<=52;i++){
-            if(OtherUtils.isLegacy()){
-                new InventoryItem(inv, i, Material.valueOf("STAINED_GLASS_PANE")).dataValue((short) 15).name("").ready();
-            }else{
-                new InventoryItem(inv, i, Material.BLACK_STAINED_GLASS_PANE).name("").ready();
+            //Decoration
+            for(int i=46;i<=52;i++){
+                if(OtherUtils.isLegacy()){
+                    new InventoryItem(inv, i, Material.valueOf("STAINED_GLASS_PANE")).dataValue((short) 15).name("").ready();
+                }else{
+                    new InventoryItem(inv, i, Material.BLACK_STAINED_GLASS_PANE).name("").ready();
+                }
             }
-        }
 
-        //Set Go Back
-        new InventoryItem(inv, 45, Material.ARROW).name("&eGo Back").ready();
+            //Set Go Back
+            new InventoryItem(inv, 45, Material.ARROW).name("&eGo Back").ready();
 
-        //Save Item
-        List<String> lore = new ArrayList<>();
-        lore.add("&7If you make any changes in this inventory");
-        lore.add("&7it is very important to click this item");
-        lore.add("&7before closing it or going back.");
-        new InventoryItem(inv, 53, Material.EMERALD_BLOCK).name("&6&lSave Kit Items").lore(lore).ready();
+            //Save Item
+            List<String> lore = new ArrayList<>();
+            lore.add("&7If you make any changes in this inventory");
+            lore.add("&7it is very important to click this item");
+            lore.add("&7before closing it or going back.");
+            new InventoryItem(inv, 53, Material.EMERALD_BLOCK).name("&6&lSave Kit Items").lore(lore).ready();
 
-        //Info
-        lore = new ArrayList<>();
-        lore.add("&7Here you can edit the items of the kit.");
-        lore.add("");
-        lore.add("&7If you want to set an item on the offhand");
-        lore.add("&7just RIGHT CLICK it.");
-        lore.add("");
-        lore.add("&7You can move the items to define a custom");
-        lore.add("&7position on the PREVIEW inventory.");
-        new InventoryItem(inv, 49, Material.COMPASS).name("&6&lInfo").lore(lore).ready();
+            //Info
+            lore = new ArrayList<>();
+            lore.add("&7Here you can edit the items of the kit.");
+            lore.add("");
+            lore.add("&7If you want to set an item on the offhand");
+            lore.add("&7just RIGHT CLICK it.");
+            lore.add("");
+            lore.add("&7You can move the items to define a custom");
+            lore.add("&7position on the PREVIEW inventory.");
+            new InventoryItem(inv, 49, Material.COMPASS).name("&6&lInfo").lore(lore).ready();
 
-        //Kit Items
-        Kit kit = plugin.getKitsManager().getKitByName(inventoryPlayer.getKitName());
-        ArrayList<KitItem> items = kit.getItems();
-        KitItemManager kitItemManager = plugin.getKitItemManager();
-        int slot = 0;
-        for(KitItem kitItem : items){
-            ItemStack item = kitItemManager.createItemFromKitItem(kitItem, null, kit); //Player null means variables will be showed
+            //Kit Items
+            Kit kit = plugin.getKitsManager().getKitByName(inventoryPlayer.getKitName());
+            ArrayList<KitItem> items = kit.getItems();
+            KitItemManager kitItemManager = plugin.getKitItemManager();
+            int slot = 0;
+            for(KitItem kitItem : items){
+                ItemStack item = kitItemManager.createItemFromKitItem(kitItem, null, kit); //Player null means variables will be showed
 
-            int finalSlot = kitItem.getPreviewSlot() != -1 ? kitItem.getPreviewSlot() : slot;
+                int finalSlot = kitItem.getPreviewSlot() != -1 ? kitItem.getPreviewSlot() : slot;
 
-            if(kitItem.isOffhand()){
-                setItemOffHand(inv,item,finalSlot);
-            }else{
-                inv.setItem(finalSlot,item);
+                if(kitItem.isOffhand()){
+                    setItemOffHand(inv,item,finalSlot);
+                }else{
+                    inv.setItem(finalSlot,item);
+                }
+                slot++;
             }
-            slot++;
-        }
 
-        inventoryPlayer.getPlayer().openInventory(inv);
-        inventoryEditManager.getPlayers().add(inventoryPlayer);
+            inventoryPlayer.getPlayer().openInventory(inv);
+            inventoryEditManager.getPlayers().add(inventoryPlayer);
+        }, null);
     }
 
     public void clickOffHand(InventoryPlayer inventoryPlayer, Inventory inv, ItemStack clickedItem, int clickedSlot){

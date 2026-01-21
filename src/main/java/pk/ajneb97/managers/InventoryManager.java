@@ -80,62 +80,64 @@ public class InventoryManager {
     }
 
     public void openInventory(InventoryPlayer inventoryPlayer){
-        KitInventory kitInventory = getInventory(inventoryPlayer.getInventoryName());
-        MainConfigManager mainConfigManager = plugin.getConfigsManager().getMainConfigManager();
+        inventoryPlayer.getPlayer().getScheduler().run(plugin, t -> {
+            KitInventory kitInventory = getInventory(inventoryPlayer.getInventoryName());
+            MainConfigManager mainConfigManager = plugin.getConfigsManager().getMainConfigManager();
 
-        String title = kitInventory.getTitle();
-        if(inventoryPlayer.getInventoryName().equals("buy_requirements_inventory") || inventoryPlayer.getInventoryName().equals("preview_inventory")){
-            title = title.replace("%kit%",inventoryPlayer.getKitName());
-        }
-        Inventory inv;
-        if(mainConfigManager.isUseMiniMessage()){
-            inv = MiniMessageUtils.createInventory(kitInventory.getSlots(),title);
-        }else{
-            inv = Bukkit.createInventory(null,kitInventory.getSlots(), MessagesManager.getLegacyColoredMessage(title));
-        }
-
-        List<ItemKitInventory> items = kitInventory.getItems();
-        KitItemManager kitItemManager = plugin.getKitItemManager();
-        KitsManager kitsManager = plugin.getKitsManager();
-        PlayerDataManager playerDataManager = plugin.getPlayerDataManager();
-
-        //Add items for all inventories
-        for(ItemKitInventory itemInventory : items){
-            for(int slot : itemInventory.getSlots()){
-                String type = itemInventory.getType();
-                if(type != null && type.startsWith("kit: ")){
-                    setKit(type.replace("kit: ",""),inventoryPlayer.getPlayer(),inv,slot,kitsManager
-                            ,playerDataManager,kitItemManager,null);
-                    continue;
-                }
-
-                ItemStack item = kitItemManager.createItemFromKitItem(itemInventory.getItem(),inventoryPlayer.getPlayer(),null);
-
-                if(inventoryPlayer.getInventoryName().equals("buy_requirements_inventory")){
-                    inventoryRequirementsManager.configureRequirementsItem(item,inventoryPlayer.getKitName(),inventoryPlayer.getPlayer());
-                    if(type != null){
-                        item = ItemUtils.setTagStringItem(plugin,item, "playerkits_buy", type);
-                    }
-                }
-
-                String openInventory = itemInventory.getOpenInventory();
-                if(openInventory != null) {
-                    item = ItemUtils.setTagStringItem(plugin,item, "playerkits_open_inventory", openInventory);
-                }
-                item = setItemActions(itemInventory,item);
-
-                inv.setItem(slot,item);
+            String title = kitInventory.getTitle();
+            if(inventoryPlayer.getInventoryName().equals("buy_requirements_inventory") || inventoryPlayer.getInventoryName().equals("preview_inventory")){
+                title = title.replace("%kit%",inventoryPlayer.getKitName());
             }
-        }
+            Inventory inv;
+            if(mainConfigManager.isUseMiniMessage()){
+                inv = MiniMessageUtils.createInventory(kitInventory.getSlots(),title);
+            }else{
+                inv = Bukkit.createInventory(null,kitInventory.getSlots(), MessagesManager.getLegacyColoredMessage(title));
+            }
 
-        //Special items for some inventories
-        if(inventoryPlayer.getInventoryName().equals("preview_inventory")){
-            setKitPreviewItems(inv,inventoryPlayer,kitInventory);
-        }
+            List<ItemKitInventory> items = kitInventory.getItems();
+            KitItemManager kitItemManager = plugin.getKitItemManager();
+            KitsManager kitsManager = plugin.getKitsManager();
+            PlayerDataManager playerDataManager = plugin.getPlayerDataManager();
+
+            //Add items for all inventories
+            for(ItemKitInventory itemInventory : items){
+                for(int slot : itemInventory.getSlots()){
+                    String type = itemInventory.getType();
+                    if(type != null && type.startsWith("kit: ")){
+                        setKit(type.replace("kit: ",""),inventoryPlayer.getPlayer(),inv,slot,kitsManager
+                                ,playerDataManager,kitItemManager,null);
+                        continue;
+                    }
+
+                    ItemStack item = kitItemManager.createItemFromKitItem(itemInventory.getItem(),inventoryPlayer.getPlayer(),null);
+
+                    if(inventoryPlayer.getInventoryName().equals("buy_requirements_inventory")){
+                        inventoryRequirementsManager.configureRequirementsItem(item,inventoryPlayer.getKitName(),inventoryPlayer.getPlayer());
+                        if(type != null){
+                            item = ItemUtils.setTagStringItem(plugin,item, "playerkits_buy", type);
+                        }
+                    }
+
+                    String openInventory = itemInventory.getOpenInventory();
+                    if(openInventory != null) {
+                        item = ItemUtils.setTagStringItem(plugin,item, "playerkits_open_inventory", openInventory);
+                    }
+                    item = setItemActions(itemInventory,item);
+
+                    inv.setItem(slot,item);
+                }
+            }
+
+            //Special items for some inventories
+            if(inventoryPlayer.getInventoryName().equals("preview_inventory")){
+                setKitPreviewItems(inv,inventoryPlayer,kitInventory);
+            }
 
 
-        inventoryPlayer.getPlayer().openInventory(inv);
-        players.add(inventoryPlayer);
+            inventoryPlayer.getPlayer().openInventory(inv);
+            players.add(inventoryPlayer);
+        }, null);
     }
 
     private ItemStack setItemActions(ItemKitInventory itemInventory, ItemStack item) {

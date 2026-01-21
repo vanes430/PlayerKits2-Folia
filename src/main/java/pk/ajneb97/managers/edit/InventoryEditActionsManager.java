@@ -30,69 +30,71 @@ public class InventoryEditActionsManager {
     }
 
     public void openInventory(InventoryPlayer inventoryPlayer,String type) {
-        inventoryPlayer.setInventoryName("edit_actions_"+type);
-        Inventory inv = Bukkit.createInventory(null, 54, MessagesManager.getLegacyColoredMessage("&9Editing Kit"));
+        inventoryPlayer.getPlayer().getScheduler().run(plugin, t -> {
+            inventoryPlayer.setInventoryName("edit_actions_"+type);
+            Inventory inv = Bukkit.createInventory(null, 54, MessagesManager.getLegacyColoredMessage("&9Editing Kit"));
 
-        //Decoration
-        for(int i=45;i<=52;i++){
-            if(OtherUtils.isLegacy()){
-                new InventoryItem(inv, i, Material.valueOf("STAINED_GLASS_PANE")).dataValue((short) 15).name("").ready();
+            //Decoration
+            for(int i=45;i<=52;i++){
+                if(OtherUtils.isLegacy()){
+                    new InventoryItem(inv, i, Material.valueOf("STAINED_GLASS_PANE")).dataValue((short) 15).name("").ready();
+                }else{
+                    new InventoryItem(inv, i, Material.BLACK_STAINED_GLASS_PANE).name("").ready();
+                }
+            }
+
+            //Set Go Back
+            new InventoryItem(inv, 45, Material.ARROW).name("&eGo Back").ready();
+
+            //Set Add Action
+            new InventoryItem(inv, 53, Material.EMERALD_BLOCK).name("&6&lAdd Action").ready();
+
+            //Set Info Item
+            List<String> lore = new ArrayList<String>();
+            lore.add("&7You are currently editing the actions");
+            if(type.equals("claim")){
+                lore.add("&7when the player claims the kit.");
             }else{
-                new InventoryItem(inv, i, Material.BLACK_STAINED_GLASS_PANE).name("").ready();
+                lore.add("&7when there is an error when claiming");
+                lore.add("&7the kit.");
             }
-        }
+            new InventoryItem(inv, 49, Material.COMPASS).name("&6&lInfo").lore(lore).ready();
 
-        //Set Go Back
-        new InventoryItem(inv, 45, Material.ARROW).name("&eGo Back").ready();
+            //Set Actions
+            Kit kit = plugin.getKitsManager().getKitByName(inventoryPlayer.getKitName());
+            ArrayList<KitAction> actions = getKitActionsFromType(kit,type);
+            int slot = 0;
+            for(KitAction kitAction : actions){
+                String executeBeforeItems = kitAction.isExecuteBeforeItems() ? "&aYES" : "&cNO";
+                String countAsItem = kitAction.isCountAsItem() ? "&aYES" : "&cNO";
+                String displayItem = kitAction.getDisplayItem() != null ? "&aYES" : "&cNO";
 
-        //Set Add Action
-        new InventoryItem(inv, 53, Material.EMERALD_BLOCK).name("&6&lAdd Action").ready();
+                lore = new ArrayList<>();
+                lore.add(MessagesManager.getLegacyColoredMessage("&f")+kitAction.getAction());
+                lore.add("");
+                lore.add(MessagesManager.getLegacyColoredMessage("&7Execute before giving kit items? "+executeBeforeItems));
+                lore.add(MessagesManager.getLegacyColoredMessage("&7Count as item? "+countAsItem));
+                lore.add(MessagesManager.getLegacyColoredMessage("&7Has display item? "+displayItem));
+                lore.add("");
+                lore.add(MessagesManager.getLegacyColoredMessage("&a&lLEFT CLICK &ato edit"));
+                lore.add(MessagesManager.getLegacyColoredMessage("&c&lRIGHT CLICK &cto remove"));
 
-        //Set Info Item
-        List<String> lore = new ArrayList<String>();
-        lore.add("&7You are currently editing the actions");
-        if(type.equals("claim")){
-            lore.add("&7when the player claims the kit.");
-        }else{
-            lore.add("&7when there is an error when claiming");
-            lore.add("&7the kit.");
-        }
-        new InventoryItem(inv, 49, Material.COMPASS).name("&6&lInfo").lore(lore).ready();
+                ItemStack item = new ItemStack(Material.PAPER);
+                ItemMeta meta = item.getItemMeta();
+                meta.setDisplayName(MessagesManager.getLegacyColoredMessage("&7Action &e#"+(slot+1)));
+                meta.setLore(lore);
+                item.setItemMeta(meta);
+                inv.setItem(slot,item);
 
-        //Set Actions
-        Kit kit = plugin.getKitsManager().getKitByName(inventoryPlayer.getKitName());
-        ArrayList<KitAction> actions = getKitActionsFromType(kit,type);
-        int slot = 0;
-        for(KitAction kitAction : actions){
-            String executeBeforeItems = kitAction.isExecuteBeforeItems() ? "&aYES" : "&cNO";
-            String countAsItem = kitAction.isCountAsItem() ? "&aYES" : "&cNO";
-            String displayItem = kitAction.getDisplayItem() != null ? "&aYES" : "&cNO";
-
-            lore = new ArrayList<>();
-            lore.add(MessagesManager.getLegacyColoredMessage("&f")+kitAction.getAction());
-            lore.add("");
-            lore.add(MessagesManager.getLegacyColoredMessage("&7Execute before giving kit items? "+executeBeforeItems));
-            lore.add(MessagesManager.getLegacyColoredMessage("&7Count as item? "+countAsItem));
-            lore.add(MessagesManager.getLegacyColoredMessage("&7Has display item? "+displayItem));
-            lore.add("");
-            lore.add(MessagesManager.getLegacyColoredMessage("&a&lLEFT CLICK &ato edit"));
-            lore.add(MessagesManager.getLegacyColoredMessage("&c&lRIGHT CLICK &cto remove"));
-
-            ItemStack item = new ItemStack(Material.PAPER);
-            ItemMeta meta = item.getItemMeta();
-            meta.setDisplayName(MessagesManager.getLegacyColoredMessage("&7Action &e#"+(slot+1)));
-            meta.setLore(lore);
-            item.setItemMeta(meta);
-            inv.setItem(slot,item);
-
-            slot++;
-            if(slot >= 44){
-                break;
+                slot++;
+                if(slot >= 44){
+                    break;
+                }
             }
-        }
 
-        inventoryPlayer.getPlayer().openInventory(inv);
-        inventoryEditManager.getPlayers().add(inventoryPlayer);
+            inventoryPlayer.getPlayer().openInventory(inv);
+            inventoryEditManager.getPlayers().add(inventoryPlayer);
+        }, null);
     }
 
     public void removeAction(InventoryPlayer inventoryPlayer,int slot){

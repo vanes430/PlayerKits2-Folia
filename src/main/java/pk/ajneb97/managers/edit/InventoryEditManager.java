@@ -76,10 +76,11 @@ public class InventoryEditManager {
     }
 
     public void openInventory(InventoryPlayer inventoryPlayer) {
-        inventoryPlayer.setInventoryName("edit_main_inventory");
-        Inventory inv = Bukkit.createInventory(null, 45, MessagesManager.getLegacyColoredMessage("&9Editing Kit"));
+        inventoryPlayer.getPlayer().getScheduler().run(plugin, t -> {
+            inventoryPlayer.setInventoryName("edit_main_inventory");
+            Inventory inv = Bukkit.createInventory(null, 45, MessagesManager.getLegacyColoredMessage("&9Editing Kit"));
 
-        Kit kit = plugin.getKitsManager().getKitByName(inventoryPlayer.getKitName());
+            Kit kit = plugin.getKitsManager().getKitByName(inventoryPlayer.getKitName());
 
         //Set Position
         List<String> lore = new ArrayList<String>();
@@ -254,6 +255,7 @@ public class InventoryEditManager {
 
         inventoryPlayer.getPlayer().openInventory(inv);
         players.add(inventoryPlayer);
+        }, null);
     }
 
     public List<String> setActionItemLore(ArrayList<KitAction> actions,List<String> lore){

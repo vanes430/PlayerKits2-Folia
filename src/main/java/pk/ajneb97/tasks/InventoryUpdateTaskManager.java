@@ -1,9 +1,9 @@
 package pk.ajneb97.tasks;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.scheduler.BukkitRunnable;
 import pk.ajneb97.PlayerKits2;
 import pk.ajneb97.managers.*;
 import pk.ajneb97.model.inventory.InventoryPlayer;
@@ -20,12 +20,7 @@ public class InventoryUpdateTaskManager {
     }
 
     public void start(){
-        new BukkitRunnable(){
-            @Override
-            public void run() {
-                execute();
-            }
-        }.runTaskTimer(plugin,0L,20L);
+        Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin, task -> execute(), 1L, 20L);
     }
 
     public void execute(){
@@ -35,24 +30,26 @@ public class InventoryUpdateTaskManager {
         KitItemManager kitItemManager = plugin.getKitItemManager();
 
         ArrayList<InventoryPlayer> players = inventoryManager.getPlayers();
-        for(InventoryPlayer player : players){
-            Inventory inv = InventoryUtils.getTopInventory(player.getPlayer());
-            if(inv == null){
-                continue;
-            }
-            ItemStack[] contents = inv.getContents();
-            for(int i=0;i<contents.length;i++){
-                ItemStack item = contents[i];
-                if(item == null || item.getType().equals(Material.AIR)){
-                    continue;
+        for(InventoryPlayer invPlayer : players){
+            invPlayer.getPlayer().getScheduler().run(plugin, t -> {
+                Inventory inv = InventoryUtils.getTopInventory(invPlayer.getPlayer());
+                if(inv == null){
+                    return;
                 }
+                ItemStack[] contents = inv.getContents();
+                for(int i=0;i<contents.length;i++){
+                    ItemStack item = contents[i];
+                    if(item == null || item.getType().equals(Material.AIR)){
+                        continue;
+                    }
 
-                String kitName = ItemUtils.getTagStringItem(plugin,item,"playerkits_kit");
-                if(kitName != null){
-                    inventoryManager.setKit(kitName,player.getPlayer(),inv,i,kitsManager,
-                            playerDataManager,kitItemManager,item);
+                    String kitName = ItemUtils.getTagStringItem(plugin,item,"playerkits_kit");
+                    if(kitName != null){
+                        inventoryManager.setKit(kitName,invPlayer.getPlayer(),inv,i,kitsManager,
+                                playerDataManager,kitItemManager,item);
+                    }
                 }
-            }
+            }, null);
         }
     }
 }

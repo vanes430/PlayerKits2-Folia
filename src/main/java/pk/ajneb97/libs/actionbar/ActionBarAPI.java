@@ -1,10 +1,10 @@
 package pk.ajneb97.libs.actionbar;
 
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 import pk.ajneb97.PlayerKits2;
 import pk.ajneb97.api.PlayerKitsAPI;
 import pk.ajneb97.managers.MessagesManager;
@@ -30,7 +30,7 @@ public class ActionBarAPI
       message = MessagesManager.getLegacyColoredMessage(message);
 	  boolean useOldMethods = false;
 	  String nmsver = Bukkit.getServer().getClass().getPackage().getName();
-      nmsver = nmsver.substring(nmsver.lastIndexOf(".") + 1);
+      nmsver = nmsver.substring(nmsver.lastIndexOf('.') + 1);
       if ((nmsver.equalsIgnoreCase("v1_8_R1")) || (nmsver.startsWith("v1_7_"))) {
           useOldMethods = true;
       }
@@ -86,23 +86,13 @@ public class ActionBarAPI
 	  
       if (duration > 0) {
           // Sends empty message at the end of the duration. Allows messages shorter than 3 seconds, ensures precision.
-          new BukkitRunnable() {
-              @Override
-              public void run() {
-            	  sendActionBar(player, "");
-              }
-          }.runTaskLater(plugin, duration + 1);
+          player.getScheduler().runDelayed(plugin, t -> sendActionBar(player, ""), null, duration + 1L);
       }
 
       // Re-sends the messages every 3 seconds so it doesn't go away from the player's screen.
       while (duration > 40) {
           duration -= 40;
-          new BukkitRunnable() {
-              @Override
-              public void run() {
-                  sendActionBar(player, message);
-              }
-          }.runTaskLater(plugin, (long) duration);
+          player.getScheduler().runDelayed(plugin, t -> sendActionBar(player, message), null, (long) duration);
       }
   }
 
